@@ -276,8 +276,22 @@
             thinking: true
         };
         
-        // Load saved state
+        // Load saved state from API (source of truth)
         async function loadState() {
+            try {
+                // Try API first (actual state)
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    const data = await response.json();
+                    state = { ...state, ...data };
+                    updateUI();
+                    return;
+                }
+            } catch (e) {
+                console.log('API unavailable:', e.message);
+            }
+            
+            // Fallback to CloudStorage
             try {
                 if (tg?.CloudStorage) {
                     const data = await new Promise((resolve) => {
@@ -291,13 +305,13 @@
                     }
                 }
             } catch (e) {
-                console.log('Could not load state:', e);
+                console.log('Could not load from CloudStorage:', e);
             }
         }
         
-        // Webhook config
-        const WEBHOOK_URL = 'https://pink.tail633074.ts.net/hooks/config';
-        const WEBHOOK_TOKEN = 'p1nk-hook-b7e4d9f1c3a2';
+        // API config
+        const API_URL = 'https://pink.tail633074.ts.net:18791/mode';
+        const API_TOKEN = 'p1nk-hook-b7e4d9f1c3a2';
         
         // Save state
         async function saveState() {
@@ -307,13 +321,13 @@
                     tg.CloudStorage.setItem('p1nk_config', JSON.stringify(state));
                 }
                 
-                // Send to P1NK webhook for immediate effect
+                // Send to P1NK API for immediate effect
                 try {
-                    const response = await fetch(WEBHOOK_URL, {
+                    const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${WEBHOOK_TOKEN}`
+                            'Authorization': `Bearer ${API_TOKEN}`
                         },
                         body: JSON.stringify(state)
                     });
@@ -322,10 +336,10 @@
                         console.log('Config synced to P1NK');
                         haptic('success');
                     } else {
-                        console.warn('Webhook returned:', response.status);
+                        console.warn('API returned:', response.status);
                     }
                 } catch (fetchErr) {
-                    console.log('Webhook unavailable, saved locally:', fetchErr.message);
+                    console.log('API unavailable, saved locally:', fetchErr.message);
                 }
             } catch (e) {
                 console.log('Could not save state:', e);
