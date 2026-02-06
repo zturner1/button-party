@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>P1NK Config Menu</title>
+    <title>P1NK Control Panel</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -14,117 +14,360 @@
         
         body {
             min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
             background: var(--tg-theme-bg-color, #1a1a2e);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 20px;
+            color: var(--tg-theme-text-color, #ffffff);
         }
         
-        .btn {
-            width: 80px;
-            height: 80px;
-            border: none;
-            border-radius: 16px;
-            font-size: 32px;
-            cursor: pointer;
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+        .header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            gap: 12px;
+            margin-bottom: 24px;
         }
         
-        .btn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                        rgba(255,255,255,0.4) 0%, transparent 60%);
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header .emoji {
+            font-size: 32px;
+        }
+        
+        .section {
+            background: var(--tg-theme-secondary-bg-color, #252542);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--tg-theme-hint-color, #888);
+            margin-bottom: 12px;
+        }
+        
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+        
+        .toggle-info {
+            flex: 1;
+        }
+        
+        .toggle-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .toggle-desc {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #888);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 32px;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        
+        .toggle-switch input {
             opacity: 0;
-            transition: opacity 0.3s;
+            width: 0;
+            height: 0;
         }
         
-        .btn:active {
-            transform: scale(0.92);
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #444;
+            border-radius: 32px;
+            transition: 0.3s;
         }
         
-        .btn.pop {
-            animation: pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        .toggle-slider::before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
         }
         
-        .btn.ripple::after {
-            opacity: 1;
-            animation: ripple 0.6s ease-out forwards;
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
         }
         
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
+        input:checked + .toggle-slider::before {
+            transform: translateX(20px);
         }
         
-        @keyframes ripple {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
+        .status-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
         }
         
-        .btn.glow {
-            box-shadow: 0 0 30px currentColor, 0 4px 12px rgba(0, 0, 0, 0.3);
+        .status-chip {
+            background: rgba(255,105,180,0.2);
+            color: #ff69b4;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
         }
         
-        .color-pink { 
-            background: linear-gradient(135deg, #ff69b4, #ff1493); 
-            color: #ff69b4; 
+        .status-chip.off {
+            background: rgba(136,136,136,0.2);
+            color: #888;
+        }
+        
+        .info-box {
+            background: rgba(255,105,180,0.1);
+            border-left: 3px solid #ff69b4;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 16px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .worker-preview {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .worker-badge {
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .worker-badge .tier {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .worker-badge .use {
+            color: var(--tg-theme-hint-color, #888);
+            font-size: 10px;
         }
     </style>
 </head>
 <body>
-    <button class="btn color-pink" id="mainBtn">🎉</button>
+    <div class="header">
+        <span class="emoji">🩷</span>
+        <h1>P1NK Control</h1>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">⚡ Orchestration</div>
+        
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="toggle-label">Swarm Protocol</div>
+                <div class="toggle-desc">Delegate to Haiku/Sonnet workers</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="swarmToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="toggle-label">Parallel Execution</div>
+                <div class="toggle-desc">Fan-out independent tasks</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="parallelToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div id="workerPreview" class="worker-preview" style="display: none;">
+            <div class="worker-badge">
+                <div class="tier">Haiku</div>
+                <div class="use">Simple</div>
+            </div>
+            <div class="worker-badge">
+                <div class="tier">Sonnet</div>
+                <div class="use">Standard</div>
+            </div>
+            <div class="worker-badge">
+                <div class="tier">Opus</div>
+                <div class="use">Complex</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">🧠 Thinking</div>
+        
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="toggle-label">Extended Thinking</div>
+                <div class="toggle-desc">High reasoning for main agent</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="thinkingToggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">📊 Current Mode</div>
+        <div class="status-bar" id="statusBar">
+            <span class="status-chip off">Swarm: OFF</span>
+            <span class="status-chip off">Parallel: OFF</span>
+            <span class="status-chip">Thinking: HIGH</span>
+        </div>
+    </div>
+    
+    <div class="info-box" id="infoBox">
+        <strong>Direct Mode:</strong> P1NK handles all tasks directly with extended thinking enabled.
+    </div>
 
     <script>
-        const icons = ['🎉', '🎊'];
-        let toggled = false;
-        
         // Initialize Telegram WebApp
-        if (window.Telegram?.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
         }
         
-        function haptic() {
+        function haptic(type = 'light') {
             try {
-                Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                tg?.HapticFeedback?.impactOccurred(type);
             } catch (e) {}
         }
         
-        const btn = document.getElementById('mainBtn');
+        // State
+        let state = {
+            swarm: false,
+            parallel: false,
+            thinking: true
+        };
         
-        btn.addEventListener('click', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-            btn.style.setProperty('--x', x + '%');
-            btn.style.setProperty('--y', y + '%');
+        // Load saved state
+        async function loadState() {
+            try {
+                if (tg?.CloudStorage) {
+                    const data = await new Promise((resolve) => {
+                        tg.CloudStorage.getItem('p1nk_config', (err, value) => {
+                            resolve(value ? JSON.parse(value) : null);
+                        });
+                    });
+                    if (data) {
+                        state = { ...state, ...data };
+                        updateUI();
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load state:', e);
+            }
+        }
+        
+        // Save state
+        async function saveState() {
+            try {
+                if (tg?.CloudStorage) {
+                    tg.CloudStorage.setItem('p1nk_config', JSON.stringify(state));
+                }
+                // Also send to bot so P1NK knows immediately
+                if (tg) {
+                    tg.sendData(JSON.stringify({
+                        type: 'config_update',
+                        config: state
+                    }));
+                }
+            } catch (e) {
+                console.log('Could not save state:', e);
+            }
+        }
+        
+        // Update UI based on state
+        function updateUI() {
+            document.getElementById('swarmToggle').checked = state.swarm;
+            document.getElementById('parallelToggle').checked = state.parallel;
+            document.getElementById('thinkingToggle').checked = state.thinking;
             
-            // Toggle icon
-            toggled = !toggled;
-            btn.textContent = toggled ? icons[1] : icons[0];
+            // Worker preview
+            document.getElementById('workerPreview').style.display = state.swarm ? 'flex' : 'none';
             
-            // Animations
-            btn.classList.remove('pop', 'ripple', 'glow');
-            void btn.offsetWidth; // Force reflow
-            btn.classList.add('pop', 'ripple', 'glow');
+            // Status chips
+            const statusBar = document.getElementById('statusBar');
+            statusBar.innerHTML = `
+                <span class="status-chip ${state.swarm ? '' : 'off'}">Swarm: ${state.swarm ? 'ON' : 'OFF'}</span>
+                <span class="status-chip ${state.parallel ? '' : 'off'}">Parallel: ${state.parallel ? 'ON' : 'OFF'}</span>
+                <span class="status-chip ${state.thinking ? '' : 'off'}">Thinking: ${state.thinking ? 'HIGH' : 'OFF'}</span>
+            `;
             
-            setTimeout(() => btn.classList.remove('glow'), 300);
-            setTimeout(() => btn.classList.remove('ripple'), 600);
-            
-            // Haptic
-            haptic();
+            // Info box
+            const infoBox = document.getElementById('infoBox');
+            if (state.swarm && state.parallel) {
+                infoBox.innerHTML = '<strong>Full Orchestration:</strong> P1NK plans → delegates to Haiku/Sonnet workers in parallel → assembles results.';
+            } else if (state.swarm) {
+                infoBox.innerHTML = '<strong>Swarm Mode:</strong> P1NK delegates tasks to appropriate worker tier (Haiku/Sonnet) sequentially.';
+            } else if (state.parallel) {
+                infoBox.innerHTML = '<strong>Parallel Only:</strong> P1NK runs independent tasks in parallel but handles all directly.';
+            } else {
+                infoBox.innerHTML = '<strong>Direct Mode:</strong> P1NK handles all tasks directly' + (state.thinking ? ' with extended thinking enabled.' : '.');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('swarmToggle').addEventListener('change', (e) => {
+            state.swarm = e.target.checked;
+            haptic('medium');
+            updateUI();
+            saveState();
         });
+        
+        document.getElementById('parallelToggle').addEventListener('change', (e) => {
+            state.parallel = e.target.checked;
+            haptic('medium');
+            updateUI();
+            saveState();
+        });
+        
+        document.getElementById('thinkingToggle').addEventListener('change', (e) => {
+            state.thinking = e.target.checked;
+            haptic('medium');
+            updateUI();
+            saveState();
+        });
+        
+        // Initialize
+        loadState();
+        updateUI();
     </script>
 </body>
 </html>
