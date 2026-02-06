@@ -295,18 +295,37 @@
             }
         }
         
+        // Webhook config
+        const WEBHOOK_URL = 'https://pink.tail633074.ts.net/hooks/config';
+        const WEBHOOK_TOKEN = 'p1nk-hook-b7e4d9f1c3a2';
+        
         // Save state
         async function saveState() {
             try {
+                // Save to CloudStorage for persistence
                 if (tg?.CloudStorage) {
                     tg.CloudStorage.setItem('p1nk_config', JSON.stringify(state));
                 }
-                // Also send to bot so P1NK knows immediately
-                if (tg) {
-                    tg.sendData(JSON.stringify({
-                        type: 'config_update',
-                        config: state
-                    }));
+                
+                // Send to P1NK webhook for immediate effect
+                try {
+                    const response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${WEBHOOK_TOKEN}`
+                        },
+                        body: JSON.stringify(state)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Config synced to P1NK');
+                        haptic('success');
+                    } else {
+                        console.warn('Webhook returned:', response.status);
+                    }
+                } catch (fetchErr) {
+                    console.log('Webhook unavailable, saved locally:', fetchErr.message);
                 }
             } catch (e) {
                 console.log('Could not save state:', e);
